@@ -42,10 +42,10 @@ def send_system_info(conf):
     d = {
         "id": conf["id"],
         "cpu_count": psutil.cpu_count(),
-        "memory_total": psutil.virtual_memory().total,
+        "total_memory": psutil.virtual_memory().total,
     }
 
-    request.post("http://sih.rishav.io:8008/sysinfo", json=d)
+    requests.post("http://sih.rishav.io:8008/sysinfo", json=d)
 
 
 def get_network():
@@ -105,4 +105,4 @@ def register_config():
 if __name__ == "__main__":
     conf = register_config()
     send_system_info(conf)
-    asyncio.get_event_loop().run_until_complete(generateData(conf))
+    asyncio.get_event_loop().run_until_complete(generateData())
