@@ -34,6 +34,15 @@ def proc_by_cpu():
     return listOfProcObjects
 
 
+def get_network():
+    r1 = psutil.net_io_counters()
+    time.sleep(1)
+    r2 = psutil.net_io_counters()
+    down = (r2.bytes_recv - r1.bytes_recv) / 1024.0
+    up = (r2.bytes_sent - r1.bytes_sent) / 1024.0
+    return {"up": up, "down": down}
+
+
 async def generateData():
     # async with websockets.connect("ws://localhost:9090") as websocket:
     async with websockets.connect("ws://ws.rishav.io:9090") as websocket:
@@ -47,6 +56,7 @@ async def generateData():
             toSend["disk_rdwr"] = psutil.disk_io_counters(perdisk=False, nowrap=True)
             toSend["system_uptime"] = round((time.time() - psutil.boot_time()), 3)
             toSend["proc"] = proc_by_cpu()[:5]
+            toSend["net"] = get_network()
 
             toSend = {"mtye": "live", "id": 1, "data": toSend}
 
