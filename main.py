@@ -1,21 +1,12 @@
 import psutil
 import json
 import time
+import websockets
 import websocket
 import threading
+import asyncio
 
-def printit():
-  threading.Timer(5.0, printit).start()
-  toSend = {}
-  toSend["ts"] = time.time()
-  toSend["cpu"] = psutil.cpu_percent(interval=1, percpu=True)
-  toSend["mem"] = psutil.virtual_memory().available
-  toSend["disk_us"]=psutil.disk_usage('/')
-  toSend["disk_rdwr"]=psutil.disk_io_counters(perdisk=False, nowrap=True)
-  toSend["system_uptime"]=round((time.time() - psutil.boot_time()), 3)
-  print(json.dumps(toSend))
 
-printit()
 
 
 def getListOfProcessSortedByMemory():
@@ -28,7 +19,7 @@ def getListOfProcessSortedByMemory():
     for proc in psutil.process_iter():
        try:
            # Fetch process details as dict
-           pinfo = proc.as_dict(attrs=['pid', 'name', 'username', 'cpu_percent'])
+           pinfo = proc.as_dict(attrs=['pid', 'name', 'cpu_percent'])
            pinfo['vms'] = proc.memory_info().vms / (1024 * 1024)
            # Append dict to list
            listOfProcObjects.append(pinfo);
@@ -40,8 +31,27 @@ def getListOfProcessSortedByMemory():
  
     return listOfProcObjects
     
-listOfRunningProcess = getListOfProcessSortedByMemory()
+"""listOfRunningProcess = getListOfProcessSortedByMemory()
  
-for elem in listOfRunningProcess[:] :
-    print(elem)
-    
+for elem in listOfRunningProcess[:5] :
+    print(json.dumps(elem))"""
+
+async def generateData():
+ async with websockets.connect('wa://wa.rishav.io:9090') as websocket:
+  toSend = {}
+  toSend["ts"] = time.time()
+  toSend["cpu"] = psutil.cpu_percent(interval=1, percpu=True)
+  toSend["mem"] = psutil.virtual_memory().available
+  toSend["disk_us"]=psutil.disk_usage('/')
+  toSend["disk_rdwr"]=psutil.disk_io_counters(perdisk=False, nowrap=True)
+  toSend["system_uptime"]=round((time.time() - psutil.boot_time()), 3)
+  toSend=json.dumps(toSend)
+  toSend = '{"mtype":"live","id":"1","data": '+ toSend + '}'
+  await websocket.send(toSend)
+  greeting = await websocket.recv()
+  print(f"<{greeting}")
+  await asyncio.sleep(2)
+  await generateData()
+
+asyncio.get_event_loop().run_until_complete(generateData())
+
