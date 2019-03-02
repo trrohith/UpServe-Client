@@ -37,6 +37,17 @@ def proc_by_cpu():
     return listOfProcObjects
 
 
+def send_system_info(conf):
+
+    d = {
+        "id": conf["id"],
+        "cpu_count": psutil.cpu_count(),
+        "memory_total": psutil.virtual_memory().total,
+    }
+
+    request.post("http://sih.rishav.io:8008/sysinfo", json=d)
+
+
 def get_network():
     r1 = psutil.net_io_counters()
     time.sleep(1)
