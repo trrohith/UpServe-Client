@@ -5,6 +5,9 @@ import websockets
 import websocket
 import threading
 import asyncio
+import os.path
+import sys
+import requests
 
 
 def proc_by_cpu():
@@ -66,4 +69,28 @@ async def generateData():
             await asyncio.sleep(2)
 
 
-asyncio.get_event_loop().run_until_complete(generateData())
+def register_config():
+    if not os.path.exists("config.json"):
+        print("config.json file not found!")
+        print("please create config.json file!")
+        sys.exit(0)
+
+    with open("config.json") as f:
+        conf = f.read()
+
+    conf = json.loads(conf)
+    if "id" not in conf:
+        print("please provide id in conf!")
+        raise KeyError
+    conf["desc"] = conf.get("desc", "No descripttion provided")
+    conf["os"] = conf.get("os", "No OS provided")
+    conf["phone"] = conf.get("phone", "8961502938")
+    conf["email"] = conf.get("email", "rishav.kundu98@gmail.com")
+
+    f = requests.post("http://sih.rishav.io:8008/reg", json=conf)
+    # print(f.text)
+
+
+if __name__ == "__main__":
+    register_config()
+    asyncio.get_event_loop().run_until_complete(generateData())
