@@ -104,4 +104,5 @@ def register_config():
 
 if __name__ == "__main__":
     conf = register_config()
+    send_system_info(conf)
     asyncio.get_event_loop().run_until_complete(generateData(conf))
