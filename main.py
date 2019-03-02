@@ -61,7 +61,7 @@ async def generateData():
             toSend["proc"] = proc_by_cpu()[:5]
             toSend["net"] = get_network()
 
-            toSend = {"mtye": "live", "id": 1, "data": toSend}
+            toSend = {"mtye": "live", "id": conf["id"], "data": toSend}
 
             await websocket.send(json.dumps(toSend))
             greeting = await websocket.recv()
@@ -88,9 +88,9 @@ def register_config():
     conf["email"] = conf.get("email", "rishav.kundu98@gmail.com")
 
     f = requests.post("http://sih.rishav.io:8008/reg", json=conf)
-    # print(f.text)
+    return conf
 
 
 if __name__ == "__main__":
-    register_config()
-    asyncio.get_event_loop().run_until_complete(generateData())
+    conf = register_config()
+    asyncio.get_event_loop().run_until_complete(generateData(conf))
