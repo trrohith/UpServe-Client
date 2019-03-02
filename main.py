@@ -37,11 +37,12 @@ for elem in listOfRunningProcess[:5] :
     print(json.dumps(elem))"""
 
 async def generateData():
-    async with websockets.connect('ws://10.52.2.90:9090') as websocket:
+    async with websockets.connect('ws://ws.rishav.io:9090') as websocket:
         toSend = {}
         toSend["ts"] = time.time()
         toSend["cpu"] = psutil.cpu_percent(interval=1, percpu=True)
-        toSend["mem"] = psutil.virtual_memory().available
+        toSend["mem_available"] = psutil.virtual_memory().available
+        toSend["mem_total"] = psutil.virtual_memory().total
         toSend["disk_us"]=psutil.disk_usage('/')
         toSend["disk_rdwr"]=psutil.disk_io_counters(perdisk=False, nowrap=True)
         toSend["system_uptime"]=round((time.time() - psutil.boot_time()), 3)
