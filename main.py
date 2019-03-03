@@ -95,6 +95,7 @@ def getJAVA():
 async def generateData():
     # async with websockets.connect("ws://localhost:9090") as websocket:
     cnt = 0
+    prev_docker = []
     async with websockets.connect("ws://ws.rishav.io:9090") as websocket:
         while True:
             print("generating")
@@ -108,9 +109,11 @@ async def generateData():
             toSend["system_uptime"] = round((time.time() - psutil.boot_time()), 3)
             toSend["proc"] = proc_by_cpu()[:5]
             toSend["net"] = get_network()
-            toSend["docker"] = []
             if cnt % 10 == 0:
-                toSend["docker"] = get_docker_stats()
+                prev_docker = get_docker_stats()
+            toSend["docker"] = prev_docker
+            cnt += 1
+
             cnt += 1
             toSend["java"] = getJAVA()
 
