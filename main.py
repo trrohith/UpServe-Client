@@ -117,8 +117,7 @@ async def generateData():
             if cnt % 10 == 0:
                 prev_docker = get_docker_stats()
             toSend["docker"] = prev_docker
-            cnt += 1
-
+            print(toSend["docker"])
             cnt += 1
             toSend["java"] = getJAVA()
 
