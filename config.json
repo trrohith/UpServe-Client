@@ -1,4 +1,7 @@
 {
     "id": 1,
-    "desc": "server 5"
+    "desc": "server 1",
+    "proc": [
+        "Notes"
+    ]
 }

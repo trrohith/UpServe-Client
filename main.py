@@ -8,6 +8,7 @@ import asyncio
 import os.path
 import sys
 import requests
+import threading
 
 
 def proc_by_cpu():
@@ -80,6 +81,35 @@ async def generateData():
             await asyncio.sleep(2)
 
 
+running_proc = []
+
+
+async def check_running_procs(conf):
+    to_monitor = conf["proc"]
+    while True:
+        print("checking procs!", running_proc)
+        to_monitor = conf["proc"]
+        cur_procs = proc_by_cpu()
+        for monitor in to_monitor:
+            if monitor in [x["name"] for x in cur_procs]:
+                if monitor not in running_proc:
+                    print("started " + monitor)
+                    requests.post(
+                        "http://sih.rishav.io:8008/notif",
+                        json={"id": conf["id"], "msg": f"{monitor} started!"},
+                    )
+                    running_proc.append(monitor)
+            else:
+                if monitor in running_proc:
+                    print("stopped " + monitor)
+                    requests.post(
+                        "http://sih.rishav.io:8008/notif",
+                        json={"id": conf["id"], "msg": f"{monitor} stopped!"},
+                    )
+                    running_proc.remove(monitor)
+        await asyncio.sleep(2)
+
+
 def register_config():
     if not os.path.exists("config.json"):
         print("config.json file not found!")
@@ -97,6 +127,7 @@ def register_config():
     conf["os"] = conf.get("os", "No OS provided")
     conf["phone"] = conf.get("phone", "8961502938")
     conf["email"] = conf.get("email", "rishav.kundu98@gmail.com")
+    conf["proc"] = conf.get("proc", [])
 
     f = requests.post("http://sih.rishav.io:8008/reg", json=conf)
     return conf
@@ -105,4 +136,6 @@ def register_config():
 if __name__ == "__main__":
     conf = register_config()
     send_system_info(conf)
+    asyncio.get_event_loop().create_task(check_running_procs(conf))
+    # asyncio.get_event_loop().run_forever()
     asyncio.get_event_loop().run_until_complete(generateData())

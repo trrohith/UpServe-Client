@@ -2,6 +2,9 @@
     "id": 2,
     "desc": "server 2",
     "os": "mac os",
-    "email": "rishav.kundu98@gmail.com",
-    "phone": "911"
+    "email": "rishav.kundu98@gmsail.com",
+    "phone": "911",
+    "proc": [
+        "Notes"
+    ]
 }
