@@ -69,6 +69,29 @@ def get_docker_stats():
     return store
 
 
+def getJAVA():
+    try:
+        response = subprocess.check_output(
+            "c:\\Program Files\\Java\\jdk1.8.0_201\\bin\\jps.exe",
+            universal_newlines=True,
+        )
+        values = response.split()
+        store = []
+        for i in range(len(values)):
+            if i % 2 != 0 and values[i] != "Jps":
+                p = psutil.Process(pid=int(values[i - 1]))
+                d = {
+                    "id": str(values[i - 1]),
+                    "name": values[i],
+                    "cpu": p.cpu_percent(interval=None),
+                    "mem": p.memory_percent(),
+                }
+                store.append(d)
+        return store
+    except FileNotFoundError:
+        return []
+
+
 async def generateData():
     # async with websockets.connect("ws://localhost:9090") as websocket:
     async with websockets.connect("ws://ws.rishav.io:9090") as websocket:
@@ -84,6 +107,7 @@ async def generateData():
             toSend["proc"] = proc_by_cpu()[:5]
             toSend["net"] = get_network()
             toSend["docker"] = get_docker_stats()
+            toSend["java"] = getJAVA()
 
             toSend = {"mtye": "live", "id": conf["id"], "data": toSend}
             # print(toSend)
