@@ -8,7 +8,7 @@ import os.path
 import sys
 import requests
 import threading
-from subprocess import check_output
+import subprocess
 
 
 def proc_by_cpu():
@@ -19,7 +19,7 @@ def proc_by_cpu():
             pass
 
     listOfProcObjects = []
-    time.sleep(0.5)
+    time.sleep(0.1)
 
     for proc in psutil.process_iter():
         try:
@@ -51,7 +51,7 @@ def send_system_info(conf):
 
 def get_network():
     r1 = psutil.net_io_counters()
-    time.sleep(1)
+    time.sleep(0.1)
     r2 = psutil.net_io_counters()
     down = (r2.bytes_recv - r1.bytes_recv) / 1024.0
     up = (r2.bytes_sent - r1.bytes_sent) / 1024.0
@@ -59,7 +59,7 @@ def get_network():
 
 
 def get_docker_stats():
-    lines = check_output(
+    lines = subprocess.check_output(
         ["docker", "stats", "--no-stream"], universal_newlines=True
     ).splitlines()
     store = []
@@ -83,7 +83,7 @@ def getJAVA():
                 d = {
                     "id": str(values[i - 1]),
                     "name": values[i],
-                    "cpu": p.cpu_percent(interval=None),
+                    "cpu": p.cpu_percent(interval=0.1),
                     "mem": p.memory_percent(),
                 }
                 store.append(d)
@@ -94,27 +94,31 @@ def getJAVA():
 
 async def generateData():
     # async with websockets.connect("ws://localhost:9090") as websocket:
+    cnt = 0
     async with websockets.connect("ws://ws.rishav.io:9090") as websocket:
         while True:
+            print("generating")
             toSend = {}
             toSend["ts"] = time.time()
-            toSend["cpu"] = psutil.cpu_percent(interval=1, percpu=True)
-            toSend["mem_available"] = psutil.virtual_memory().available
+            toSend["cpu"] = psutil.cpu_percent(interval=0.1, percpu=True)
             toSend["mem_total"] = psutil.virtual_memory().total
+            toSend["mem_available"] = psutil.virtual_memory().available
             toSend["disk_us"] = psutil.disk_usage("/")
             toSend["disk_rdwr"] = psutil.disk_io_counters(perdisk=False, nowrap=True)
             toSend["system_uptime"] = round((time.time() - psutil.boot_time()), 3)
             toSend["proc"] = proc_by_cpu()[:5]
             toSend["net"] = get_network()
-            toSend["docker"] = get_docker_stats()
+            toSend["docker"] = []
+            if cnt % 10 == 0:
+                toSend["docker"] = get_docker_stats()
+            cnt += 1
             toSend["java"] = getJAVA()
 
             toSend = {"mtye": "live", "id": conf["id"], "data": toSend}
-            # print(toSend)
+            print("done generating")
             await websocket.send(json.dumps(toSend))
             greeting = await websocket.recv()
             print(f"received {greeting}")
-            await asyncio.sleep(1)
 
 
 running_proc = []
@@ -143,7 +147,7 @@ async def check_running_procs(conf):
                         json={"id": conf["id"], "msg": f"{monitor} stopped!"},
                     )
                     running_proc.remove(monitor)
-        await asyncio.sleep(2)
+        await asyncio.sleep(60)
 
 
 def register_config():
