@@ -2,13 +2,13 @@ import psutil
 import json
 import time
 import websockets
-import websocket
 import threading
 import asyncio
 import os.path
 import sys
 import requests
 import threading
+from subprocess import check_output
 
 
 def proc_by_cpu():
@@ -58,6 +58,17 @@ def get_network():
     return {"up": up, "down": down}
 
 
+def get_docker_stats():
+    lines = check_output(
+        ["docker", "stats", "--no-stream"], universal_newlines=True
+    ).splitlines()
+    store = []
+    for line in lines[1:]:
+        line = line.split()
+        store.append({"cid": line[0], "name": line[1], "cpu": line[2], "mem": line[6]})
+    return store
+
+
 async def generateData():
     # async with websockets.connect("ws://localhost:9090") as websocket:
     async with websockets.connect("ws://ws.rishav.io:9090") as websocket:
@@ -72,13 +83,14 @@ async def generateData():
             toSend["system_uptime"] = round((time.time() - psutil.boot_time()), 3)
             toSend["proc"] = proc_by_cpu()[:5]
             toSend["net"] = get_network()
+            toSend["docker"] = get_docker_stats()
 
             toSend = {"mtye": "live", "id": conf["id"], "data": toSend}
-
+            # print(toSend)
             await websocket.send(json.dumps(toSend))
             greeting = await websocket.recv()
             print(f"received {greeting}")
-            await asyncio.sleep(2)
+            await asyncio.sleep(1)
 
 
 running_proc = []
