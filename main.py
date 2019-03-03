@@ -51,7 +51,7 @@ def send_system_info(conf):
 
 def get_network():
     r1 = psutil.net_io_counters()
-    time.sleep(0.1)
+    time.sleep(0.5)
     r2 = psutil.net_io_counters()
     down = (r2.bytes_recv - r1.bytes_recv) / 1024.0
     up = (r2.bytes_sent - r1.bytes_sent) / 1024.0
@@ -59,14 +59,19 @@ def get_network():
 
 
 def get_docker_stats():
-    lines = subprocess.check_output(
-        ["docker", "stats", "--no-stream"], universal_newlines=True
-    ).splitlines()
-    store = []
-    for line in lines[1:]:
-        line = line.split()
-        store.append({"cid": line[0], "name": line[1], "cpu": line[2], "mem": line[6]})
-    return store
+    try:
+        lines = subprocess.check_output(
+            ["docker", "stats", "--no-stream"], universal_newlines=True
+        ).splitlines()
+        store = []
+        for line in lines[1:]:
+            line = line.split()
+            store.append(
+                {"cid": line[0], "name": line[1], "cpu": line[2], "mem": line[6]}
+            )
+        return store
+    except FileNotFoundError:
+        return []
 
 
 def getJAVA():
